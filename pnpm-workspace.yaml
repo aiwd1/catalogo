@@ -1,0 +1,6 @@
+# Workspace pnpm: un solo repo (monorepo) che contiene più progetti.
+# Ogni cartella elencata è un pacchetto con il suo package.json.
+# `pnpm install` lanciato nella root installa le dipendenze di tutti.
+packages:
+  - backend
+  - frontend
