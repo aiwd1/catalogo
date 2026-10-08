@@ -43,12 +43,7 @@ function App() {
 
       setError('');
 
-      // Il nuovo prodotto è il primo della pagina 1 (ordine id desc)
-      if (page === 1) {
-        loadProducts();
-      } else {
-        setPage(1);
-      }
+      loadProducts(); // Refetch dei prodotti
     }).catch(error => {
       setError(error.message);
       throw error; // il form tiene i campi compilati
