@@ -18,6 +18,10 @@ const port = 3000;
 // Va registrato PRIMA dei router, così vale per tutte le rotte.
 app.use(cors());
 
+// Questo middleware entra in gioco quando il client
+// mi invia un messaggio DICENDOMI che è JSON
+app.use(express.json());
+
 // Tutte le rotte definite in productsRouter partono dal prefisso /products
 // (es. router.get('/') → GET http://localhost:3000/products)
 app.use('/products', productsRouter);
