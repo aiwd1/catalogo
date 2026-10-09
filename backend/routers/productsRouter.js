@@ -3,6 +3,8 @@ import { Router } from "express";
 // l'export default del file è la lista dei prodotti { id, name, descrizione, price }
 //import products from '../data/db-store-completo.js';
 import { client } from '../prisma-client.js';
+import checkProductid from "../middlewares/checkProductId.js";
+import checkProductBody from "../middlewares/checkProductBody.js";
 
 const router = Router();
 
@@ -61,12 +63,12 @@ router.get('/', async (req, res) => {
 // Non posso chiedere dammi il prodotto con id 1
 // Devo chiedere dammi il prodotto con slug "tastiera-bluetooh"
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkProductid, async (req, res) => {
     const id = Number(req.params.id);
 
     const product = await client.product.findUnique({
         where: {
-            id: id
+            id
         }
     });
 
@@ -87,34 +89,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // CRUD per creare un prodotto
-router.post('/', async (req, res) => {
-    const { name, descrizione, price } = req.body ?? {}; // Il JSON contenuto nel corpo del messaggio inviato dal Client
-
-    // Prima si controlla il body (400), poi si scrive nel database
-    if (typeof name !== 'string' || name.trim() === '') {
-        return res.status(400).json({
-            success: false,
-            message: 'name è obbligatorio',
-            data: null
-        });
-    }
-
-    if (descrizione !== undefined && typeof descrizione !== 'string') {
-        return res.status(400).json({
-            success: false,
-            message: 'descrizione deve essere una stringa',
-            data: null
-        });
-    }
-
-    // Number('abc') è NaN e NaN <= 0 è false: serve il controllo separato con Number.isNaN()
-    if (price === undefined || price === null || price === '' || Number.isNaN(Number(price)) || Number(price) <= 0) {
-        return res.status(400).json({
-            success: false,
-            message: 'price è obbligatorio e deve essere un numero maggiore di 0',
-            data: null
-        });
-    }
+router.post('/', checkProductBody, async (req, res) => {
+    const { name, descrizione, price } = req.sanitizedData;
 
     const product = await client.product.create({
         data: {
@@ -131,8 +107,40 @@ router.post('/', async (req, res) => {
     });
 });
 
+router.put('/:id', checkProductid, checkProductBody, async (req, res) => {
+    const { name, descrizione, price } = req.sanitizedData; // Il JSON contenuto nel corpo del messaggio inviato dal Client
+
+    try {
+        const product = await client.product.update({
+            data: {
+                name: name.trim(),
+                descrizione: descrizione ?? '',
+                price
+            },
+            where: {
+                id: Number(req.params.id)
+            }
+        });
+        res.json({
+            success: true,
+            message: "",
+            data: product
+        });
+
+    } catch (err) {
+        if (err.code === 'P2025') { // Quando non trovo il prodotto
+            return res.status(404).json({
+                success: false,
+                message: 'Prodotto non trovato',
+                data: null
+            });
+        }
+        throw err;
+    }
+});
+
 // DELETE /producsts/9 Voglio rimuovere il prodotto con id 1
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkProductid, async (req, res) => {
     const id = Number(req.params.id);
 
     try { // Il blocco di codice che sto provando a eseguire

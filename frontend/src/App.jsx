@@ -24,14 +24,21 @@ function App() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
+  const [editingProduct, setEditingProduct] = useState(null);
 
   // Restituisce la Promise: ProductForm sa così se l'invio è riuscito
   function addProduct(data) {
-    return fetch(`${API_URL}/products`, {
+    const url = editingProduct === null ?
+      `${API_URL}/products`:
+      `${API_URL}/products/${editingProduct.id}`
+
+    const method = editingProduct ===  null ? "POST" : "PUT";
+
+    return fetch(url, {
       headers: {
         'content-type': "application/json"
       },
-      method: "POST",
+      method,
       body: JSON.stringify(data)
     }).then((response) => {
       return response.json();
@@ -113,7 +120,13 @@ function App() {
         <p>Stai cercando: {searchInput}</p>
       </form>
 
-      <ProductForm onSubmit={addProduct} />
+      <ProductForm key={editingProduct ? editingProduct.id : 'new'}
+        onSubmit={addProduct}
+        initialValues={editingProduct}
+        onCancel={(editingProduct === null) ? null : () => {
+          setEditingProduct(null);
+        }}
+      />
 
       {error !== '' && <p>{error}</p>}
       {products.map((product) => {
@@ -130,6 +143,9 @@ function App() {
               <Link to={`/products/${product.id}`}>
                 {product.name}
               </Link>
+              <button onClick={() => {
+                setEditingProduct(product);
+              }}>Modifica</button>
               <button onClick={deleteProductInsideMap}>Elimina</button>
             </h3>
           </Fragment>
