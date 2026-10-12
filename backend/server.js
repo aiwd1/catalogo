@@ -1,6 +1,7 @@
 import express from 'express';
 import productsRouter from './routers/productsRouter.js';
 import aiRouter from './routers/aiRouter.js';
+import categoriesRouter from './routers/categoriesRouter.js';
 import cors from 'cors';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json());
 // Tutte le rotte definite in productsRouter partono dal prefisso /products
 // (es. router.get('/') → GET http://localhost:3000/products)
 app.use('/products', productsRouter);
+app.use('/categories', categoriesRouter);
 app.use('/ai', aiRouter);
 
 // Gestore degli errori (4 parametri): risponde sempre con la forma { success, message, data }

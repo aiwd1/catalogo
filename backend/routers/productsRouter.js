@@ -16,6 +16,8 @@ const router = Router();
 // http://localhost:3000/products?page=N&limit=M
 // http://localhost:3000/products?page=1&limit=20
 // http://localhost:3000/products?search=mouse&page=1&limit=20
+// http://localhost:3000/products
+// http://localhost:3000/products?category=2
 router.get('/', async (req, res) => {
     const search = (req.query.search || '').trim();
     // Valori non validi (negativi, decimali, testo) tornano ai default: skip/take negativi farebbero fallire Prisma
@@ -24,20 +26,40 @@ router.get('/', async (req, res) => {
     const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
     const limit = Number.isInteger(limitParam) && limitParam >= 1 ? Math.min(limitParam, 100) : 10;
 
-    const total = await client.product.count({
-        where: {
-            name: {
-                contains: search
-            }
+    let categoryId; // Se è undefined vuol dire che non mi è stato passato nulla e
+    // quindi non voglio il filtro della categoria
+
+    if (req.query.category !== undefined) { // Se mi è stato passato un valore
+        categoryId = Number(req.query.category);
+        if (!Number.isInteger(categoryId) || categoryId <= 0) { // Controllo la sanità del valore
+            return res.status(400).json({
+                success: false,
+                message: 'category deve essere un intero maggiore di 0',
+                data: null
+            });
+        }
+    }
+
+    const whereParam = {
+        name: {
+            contains: search
         },
+    };
+
+    if (categoryId !== undefined) {
+        whereParam.categories = {
+            some: {
+                categoryId
+            }
+        }
+    }
+
+    const total = await client.product.count({
+        where: whereParam
     }); // Il numero di record che rispettano il filtro
 
     const products = await client.product.findMany({
-        where: {
-            name: {
-                contains: search
-            }
-        },
+        where: whereParam,
         take: limit,
         skip: (page - 1) * limit,
         orderBy: {
