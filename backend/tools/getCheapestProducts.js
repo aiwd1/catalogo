@@ -39,7 +39,7 @@ async function getCheapestProductsFunction({ query }) {
 
 const getCheapestProducts = tool(getCheapestProductsFunction, {
     name: 'get_cheapest_products',
-    description: 'Ottiene i prodotti più econimici dello store. Restituisce al massimo 10 prodotti. Ogni prodotto è identificato da id, nome, descrizione e prezzo',
+    description: 'Ottiene i prodotti più economici dello store. Restituisce al massimo 10 prodotti. Ogni prodotto è identificato da id, nome, descrizione e prezzo',
     schema: getCheapestProductsSchema
 });
 

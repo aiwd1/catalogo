@@ -1,4 +1,3 @@
-// TODO: aggiungere l'import di useState da 'react'
 import { useState } from "react";
 
 const API_URL = 'http://localhost:3000';
@@ -9,11 +8,11 @@ function ChatWindow() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    function sendMessage(event) {        
+    function sendMessage(event) {
         event.preventDefault();
 
         const text = input.trim();
-        if (text === '') {
+        if (text === '' || loading) {
             return;
         }
 
@@ -65,8 +64,6 @@ function ChatWindow() {
     return (
         <div className="chat-window">
             <h2>Assistente del catalogo</h2>
-
-            {JSON.stringify(messages)}
 
             <div className="chat-messages">
                 {messages.map((message, index) => (

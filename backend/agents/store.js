@@ -10,11 +10,10 @@ const agent = createAgent({
         searchProducts,
         getCheapestProducts,
     ],
-    systemPrompt: `
-Sei l'assistente del negozio My Store. Rispondi in italiano.
+    systemPrompt: `Sei l'assistente del negozio My Store. Rispondi in italiano.
 Per qualsiasi domanda sui prodotti usa il tool search_products.
-Non inventare prodotti: se il tool non trova nulla dill.
-    `
+Per i prodotti più economici usa get_cheapest_products.
+Non inventare prodotti: se il tool non trova nulla, dillo.`
 });
 
 export default agent;
