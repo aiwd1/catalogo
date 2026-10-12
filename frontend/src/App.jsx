@@ -109,6 +109,7 @@ function App() {
   return (
     <>
       <h1>My Store</h1>
+      <Link to="/chat">Chiedi all'assistente</Link>
 
       <form onSubmit={handleSearch}>
         <input type="text" value={searchInput}

@@ -1,5 +1,6 @@
 import express from 'express';
 import productsRouter from './routers/productsRouter.js';
+import aiRouter from './routers/aiRouter.js';
 import cors from 'cors';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(express.json());
 // Tutte le rotte definite in productsRouter partono dal prefisso /products
 // (es. router.get('/') → GET http://localhost:3000/products)
 app.use('/products', productsRouter);
+app.use('/ai', aiRouter);
 
 // Express 5: la callback di app.listen riceve un eventuale errore
 // (es. porta già occupata, EADDRINUSE) invece di farlo esplodere altrove.
