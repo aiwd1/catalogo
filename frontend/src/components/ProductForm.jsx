@@ -22,17 +22,18 @@ export default function ProductForm({ onSubmit, initialValues, onCancel }) {
     function handleSubmit(event) {
         event.preventDefault();
         onSubmit({ ...form, price: Number(form.price) })
-            .then(() => setForm(emptyForm)) // svuoto i campi solo se è andata a buon fine
+            // In creazione svuoto i campi solo se è andata a buon fine; dopo una modifica
+            // App azzera editingProduct, la key cambia e il form si ricrea vuoto
+            .then(() => !isEditing && setForm(emptyForm))
             .catch(() => { }); // l'errore è già mostrato da chi ha passato onSubmit
     }
 
-    const isEditing = initialValues !== null;
-
-    const [form, setForm] = useState(initialValues === null ? emptyForm : {
+    const [form, setForm] = useState(initialValues ? {
         name: initialValues.name,
         descrizione: initialValues.descrizione,
         price: String(initialValues.price)
-    });
+    } : emptyForm);
+    const isEditing = Boolean(initialValues);
     return (
         <form onSubmit={handleSubmit}>
             <input name="name" type="text" placeholder="Name" value={form.name}
@@ -41,14 +42,11 @@ export default function ProductForm({ onSubmit, initialValues, onCancel }) {
                 onChange={handleChange} />
             <input name="price" type="number" placeholder="Price" value={form.price}
                 onChange={handleChange} />
-            <button>
-                {isEditing ? 'Modifica prodotto' : 'Aggiungi un prodotto'}
+            <button type="submit">
+                {isEditing ? 'Salva modifiche' : 'Aggiungi prodotto'}
             </button>
             {
-                onCancel && <button onClick={(event) => {
-                    event.preventDefault();
-                    onCancel();
-                }}>
+                onCancel && <button type="button" onClick={onCancel}>
                     Annulla
                 </button>
             }

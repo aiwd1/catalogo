@@ -28,6 +28,21 @@ app.use(express.json());
 app.use('/products', productsRouter);
 app.use('/ai', aiRouter);
 
+// Gestore degli errori (4 parametri): risponde sempre con la forma { success, message, data }
+// invece dell'HTML di default, così il frontend può fare response.json().
+// Copre il JSON malformato (400, errore di express.json) e le eccezioni non gestite (500).
+app.use((err, req, res, next) => {
+    const status = err.status ?? err.statusCode ?? 500;
+    if (status >= 500) {
+        console.error(err);
+    }
+    res.status(status).json({
+        success: false,
+        message: status >= 500 ? 'Errore interno del server' : 'Richiesta non valida',
+        data: null
+    });
+});
+
 // Express 5: la callback di app.listen riceve un eventuale errore
 // (es. porta già occupata, EADDRINUSE) invece di farlo esplodere altrove.
 app.listen(port, (error) => {

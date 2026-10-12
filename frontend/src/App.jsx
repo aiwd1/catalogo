@@ -27,34 +27,37 @@ function App() {
   const [editingProduct, setEditingProduct] = useState(null);
 
   // Restituisce la Promise: ProductForm sa così se l'invio è riuscito
-  function addProduct(data) {
-    const url = editingProduct === null ?
-      `${API_URL}/products`:
-      `${API_URL}/products/${editingProduct.id}`
-
-    const method = editingProduct ===  null ? "POST" : "PUT";
+  function saveProduct(data) {
+    const isEditing = editingProduct !== null;
+    const url = isEditing
+      ? `${API_URL}/products/${editingProduct.id}`
+      : `${API_URL}/products`;
 
     return fetch(url, {
-      headers: {
-        'content-type': "application/json"
-      },
-      method,
-      body: JSON.stringify(data)
-    }).then((response) => {
-      return response.json();
-    }).then((jsonData) => {
-
-      if (!jsonData.success) {
-        throw new Error(jsonData.message);
-      }
-
-      setError('');
-
-      loadProducts(); // Refetch dei prodotti
-    }).catch(error => {
-      setError(error.message);
-      throw error; // il form tiene i campi compilati
-    });
+      method: isEditing ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((jsonData) => {
+        if (!jsonData.success) {
+          throw new Error(jsonData.message);
+        }
+        setEditingProduct(null);
+        setError('');
+        // Il nuovo prodotto è il primo della pagina 1 (ordine id desc): se siamo
+        // altrove, il cambio di page fa ripartire l'effetto; se siamo già a pagina 1
+        // setPage(1) non cambia nulla, quindi ricarichiamo noi la lista.
+        if (isEditing || page === 1) {
+          loadProducts();
+        } else {
+          setPage(1);
+        }
+      })
+      .catch((err) => {
+        setError(err.message);
+        throw err; // il form tiene i campi compilati
+      });
   }
 
   function deleteProduct(id) {
@@ -64,6 +67,9 @@ function App() {
       .then(jsonData => {
         if (!jsonData.success) {
           throw new Error(jsonData.message);
+        }
+        if (editingProduct?.id === id) {
+          setEditingProduct(null);
         }
         loadProducts();
       }).catch(error => {
@@ -98,9 +104,9 @@ function App() {
     setSearch(searchInput);
   }
 
-  // Array delle dipendenze vuoto [] → l'effetto parte una sola volta,
-  // dopo il primo render. Senza [] la fetch → setProducts → nuovo render
-  // → nuova fetch creerebbe un ciclo infinito.
+  // Array delle dipendenze [page, search] → l'effetto parte dopo il primo render
+  // e poi solo quando cambiano pagina o ricerca. Senza array la fetch →
+  // setProducts → nuovo render → nuova fetch creerebbe un ciclo infinito.
   useEffect(() => {
     loadProducts();
   }, [page, search]);
@@ -122,11 +128,9 @@ function App() {
       </form>
 
       <ProductForm key={editingProduct ? editingProduct.id : 'new'}
-        onSubmit={addProduct}
+        onSubmit={saveProduct}
         initialValues={editingProduct}
-        onCancel={(editingProduct === null) ? null : () => {
-          setEditingProduct(null);
-        }}
+        onCancel={editingProduct ? () => setEditingProduct(null) : undefined}
       />
 
       {error !== '' && <p>{error}</p>}
@@ -162,7 +166,7 @@ function App() {
           Precedente
         </button>
         <span>Pagina {page} di {totalPages}</span>
-        <button disabled={page === totalPages} onClick={() => {
+        <button disabled={page >= totalPages} onClick={() => {
           if (page < totalPages) {
             setPage(page + 1)
           }

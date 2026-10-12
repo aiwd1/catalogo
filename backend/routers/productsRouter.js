@@ -3,7 +3,7 @@ import { Router } from "express";
 // l'export default del file è la lista dei prodotti { id, name, descrizione, price }
 //import products from '../data/db-store-completo.js';
 import { client } from '../prisma-client.js';
-import checkProductid from "../middlewares/checkProductId.js";
+import checkProductId from "../middlewares/checkProductId.js";
 import checkProductBody from "../middlewares/checkProductBody.js";
 
 const router = Router();
@@ -18,8 +18,11 @@ const router = Router();
 // http://localhost:3000/products?search=mouse&page=1&limit=20
 router.get('/', async (req, res) => {
     const search = (req.query.search || '').trim();
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    // Valori non validi (negativi, decimali, testo) tornano ai default: skip/take negativi farebbero fallire Prisma
+    const pageParam = Number(req.query.page);
+    const limitParam = Number(req.query.limit);
+    const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
+    const limit = Number.isInteger(limitParam) && limitParam >= 1 ? Math.min(limitParam, 100) : 10;
 
     const total = await client.product.count({
         where: {
@@ -63,7 +66,7 @@ router.get('/', async (req, res) => {
 // Non posso chiedere dammi il prodotto con id 1
 // Devo chiedere dammi il prodotto con slug "tastiera-bluetooh"
 
-router.get('/:id', checkProductid, async (req, res) => {
+router.get('/:id', checkProductId, async (req, res) => {
     const id = Number(req.params.id);
 
     const product = await client.product.findUnique({
@@ -94,9 +97,9 @@ router.post('/', checkProductBody, async (req, res) => {
 
     const product = await client.product.create({
         data: {
-            name: name.trim(),
-            descrizione: descrizione ?? '',
-            price: Number(price)
+            name,
+            descrizione,
+            price
         }
     });
 
@@ -107,14 +110,14 @@ router.post('/', checkProductBody, async (req, res) => {
     });
 });
 
-router.put('/:id', checkProductid, checkProductBody, async (req, res) => {
+router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
     const { name, descrizione, price } = req.sanitizedData; // Il JSON contenuto nel corpo del messaggio inviato dal Client
 
     try {
         const product = await client.product.update({
             data: {
-                name: name.trim(),
-                descrizione: descrizione ?? '',
+                name,
+                descrizione,
                 price
             },
             where: {
@@ -123,7 +126,7 @@ router.put('/:id', checkProductid, checkProductBody, async (req, res) => {
         });
         res.json({
             success: true,
-            message: "",
+            message: "Prodotto aggiornato",
             data: product
         });
 
@@ -140,7 +143,7 @@ router.put('/:id', checkProductid, checkProductBody, async (req, res) => {
 });
 
 // DELETE /producsts/9 Voglio rimuovere il prodotto con id 1
-router.delete('/:id', checkProductid, async (req, res) => {
+router.delete('/:id', checkProductId, async (req, res) => {
     const id = Number(req.params.id);
 
     try { // Il blocco di codice che sto provando a eseguire
