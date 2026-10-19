@@ -8,6 +8,15 @@ import checkProductBody from "../middlewares/checkProductBody.js";
 
 const router = Router();
 
+function formatProduct(product) {
+    return {
+        ...product, // prendi tutti i campi dell'oggetto products
+        categories: product.categories.map(pivot => {
+            return pivot.category;
+        }), // vai a aggiungere/sovrascrivere categories
+    };
+}
+
 // GET /products → restituisce tutti i prodotti.
 // Forma della risposta { success, message, data }: tutte le risposte dell'API
 // hanno la stessa struttura, così il frontend sa sempre dove trovare i dati
@@ -59,6 +68,18 @@ router.get('/', async (req, res) => {
     }); // Il numero di record che rispettano il filtro
 
     const products = await client.product.findMany({
+        include: {
+            categories: { // ProductCategory
+                select: {
+                    category: { // Category
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        },
         where: whereParam,
         take: limit,
         skip: (page - 1) * limit,
@@ -67,10 +88,14 @@ router.get('/', async (req, res) => {
         }
     });
 
+    const productPretty = products.map(product => {
+        return formatProduct(product);
+    });
+
     res.json({
         success: true,
         message: '',
-        data: products,
+        data: productPretty,
         meta: {
             page,
             limit,
@@ -94,7 +119,19 @@ router.get('/:id', checkProductId, async (req, res) => {
     const product = await client.product.findUnique({
         where: {
             id
-        }
+        },
+        include: {
+            categories: { // ProductCategory
+                select: {
+                    category: { // Category
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        },
     });
 
     if (!product) {
@@ -108,20 +145,29 @@ router.get('/:id', checkProductId, async (req, res) => {
     res.json({
         success: true,
         message: '',
-        data: product
+        data: formatProduct(product)
     });
 
 });
 
 // CRUD per creare un prodotto
 router.post('/', checkProductBody, async (req, res) => {
-    const { name, descrizione, price } = req.sanitizedData;
+    const { name, descrizione, price, image, categoryIds } = req.sanitizedData;
 
+    // [1, 2, 3] => [{id: 1}, {id: 2}, {id: 3}]
     const product = await client.product.create({
         data: {
             name,
             descrizione,
-            price
+            price,
+            image,
+            categories: {
+                create: categoryIds.map(categoryId => {
+                    return {
+                        categoryId
+                    };
+                })
+            }
         }
     });
 
@@ -133,14 +179,44 @@ router.post('/', checkProductBody, async (req, res) => {
 });
 
 router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
-    const { name, descrizione, price } = req.sanitizedData; // Il JSON contenuto nel corpo del messaggio inviato dal Client
+    const { name, descrizione, price, image, categoryIds } = req.sanitizedData; // Il JSON contenuto nel corpo del messaggio inviato dal Client
+
+    // Prodotto con id: 5
+    // Ha queste categorie [1, 3]
+
+    // Nel nostro aggiornamento voglia assegnarli [3, 5]
+    // Cancella tutte le relazione
+    // Aggiungi le relazioni [3, 5]
 
     try {
         const product = await client.product.update({
+            include: {
+                categories: { // ProductCategory
+                    select: {
+                        category: { // Category
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        }
+                    }
+                }
+            },
             data: {
                 name,
                 descrizione,
-                price
+                price,
+                image, // undefined: Prisma non tocca la colonna, così il form di modifica non cancella l'immagine
+                categories: {
+                    // Cancella tutte le relazioni
+                    deleteMany: {},
+                    // Aggiungi le relazione
+                    create: categoryIds.map(categoryId => {
+                        return {
+                            categoryId
+                        };
+                    })
+                }
             },
             where: {
                 id: Number(req.params.id)
@@ -149,7 +225,7 @@ router.put('/:id', checkProductId, checkProductBody, async (req, res) => {
         res.json({
             success: true,
             message: "Prodotto aggiornato",
-            data: product
+            data: formatProduct(product)
         });
 
     } catch (err) {

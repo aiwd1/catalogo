@@ -1,10 +1,11 @@
 import { client } from '../prisma-client.js';
 import productsLocal from '../data/db-store-completo.js';
 
-const dataProduct = productsLocal.map(({ name, descrizione, price }) => ({
+const dataProduct = productsLocal.map(({ name, descrizione, price, image }) => ({
   name,
   descrizione,
-  price
+  price,
+  image
 }));
 
 // deleteMany svuota le tabelle (la tabella ponte si svuota da sola grazie a Cascade)

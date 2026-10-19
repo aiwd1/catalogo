@@ -16,6 +16,7 @@ model Product {
   name        String            @db.VarChar(255)
   descrizione String            @db.Text
   price       Decimal           @db.Decimal(10, 2)
+  image       String?           @db.VarChar(500)
   categories  ProductCategory[]
 }
 
