@@ -35,7 +35,7 @@ export default function ProductDetail() {
 
     if (product !== null) {
         if (product.categories.length === 0) {
-            categoryJsx = <p>Nessun prodotto</p>;
+            categoryJsx = <p>Nessuna categoria</p>;
         } else {
             categoryJsx = <ul>
                 {product.categories.map(category => {

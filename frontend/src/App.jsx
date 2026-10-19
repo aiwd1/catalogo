@@ -204,7 +204,7 @@ function App() {
                 <small className="text-body-secondary ms-2">
                   {product.categories.map(category => {
                     return category.name;
-                  }).join(', ')}
+                  }).join(', ') || 'Nessuna categoria'}
                 </small>
                 </div>
               </div>
