@@ -36,11 +36,16 @@ const resultCategories = await client.category.createMany({ data: dataCategory }
 console.log(`Inserite ${resultCategories.count} categorie`);
 
 // Restituisce gli id di `count` categorie scelte a caso, tutte diverse tra loro.
-// ORDER BY RAND() mescola le righe nel database e LIMIT tiene solo le prime `count`.
-// Prisma non ha un orderBy casuale: serve la query SQL grezza di $queryRaw.
+// Prisma non ha un orderBy casuale: leggiamo gli id e li mescoliamo in JavaScript.
+// sort con Math.random() - 0.5 restituisce a caso un numero positivo o negativo,
+// quindi l'ordine finale è casuale; slice tiene solo i primi `count`.
 async function pickRandomCategoryIds(count) {
-  const rows = await client.$queryRaw`SELECT id FROM Category ORDER BY RAND() LIMIT ${count}`;
-  return rows.map((row) => row.id);
+  const categories = await client.category.findMany({ select: { id: true } });
+
+  return categories
+    .map((category) => category.id)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count);
 }
 
 const products = await client.product.findMany({ select: { id: true } });
