@@ -167,7 +167,6 @@ function App() {
           })}
         </select>
         </div>
-        <h1>{categoryId}</h1>
         <div className="col-md-2 d-grid">
           <button type="submit" className="btn btn-primary">Cerca</button>
         </div>
