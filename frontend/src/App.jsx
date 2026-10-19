@@ -2,6 +2,8 @@ import { useState, useEffect, Fragment } from 'react'
 import './App.css'
 import { Link } from 'react-router';
 import ProductForm from './components/ProductForm';
+import { useCart } from './hooks/useCart';
+
 
 // Indirizzo del backend Express (vedi backend/server.js, porta 3000).
 // Tenerlo in una costante evita di ripeterlo in ogni fetch.
@@ -12,6 +14,8 @@ function App() {
   // Stampato a ogni render: in Console si vede che App viene renderizzato
   // una volta con la lista vuota e di nuovo quando arrivano i prodotti.
   console.log('Render App');
+
+  const { addToCart } = useCart();
 
   // Parte da un array vuoto: al primo render i dati non ci sono ancora.
   const [products, setProducts] = useState([]);
@@ -155,17 +159,17 @@ function App() {
           />
         </div>
         <div className="col-md-4">
-        <select className="form-select" value={categoryId} onChange={(event) => {
-          setPage(1);
-          setCategoryId(event.target.value);
-        }}>
-          <option value="">Tutte le categorie</option>
-          {categories.map(category => {
-            return <option key={category.id} value={category.id}>
-              {category.name}: {category.productsCount}
-            </option>
-          })}
-        </select>
+          <select className="form-select" value={categoryId} onChange={(event) => {
+            setPage(1);
+            setCategoryId(event.target.value);
+          }}>
+            <option value="">Tutte le categorie</option>
+            {categories.map(category => {
+              return <option key={category.id} value={category.id}>
+                {category.name}: {category.productsCount}
+              </option>
+            })}
+          </select>
         </div>
         <div className="col-md-2 d-grid">
           <button type="submit" className="btn btn-primary">Cerca</button>
@@ -182,41 +186,45 @@ function App() {
 
       {error !== '' && <div className="alert alert-danger">{error}</div>}
       <div className="list-group mb-4">
-      {products.map((product) => {
-        function deleteProductInsideMap() {
-          deleteProduct(product.id);
-        }
+        {products.map((product) => {
+          function deleteProductInsideMap() {
+            deleteProduct(product.id);
+          }
 
-        return (
-          // Ogni elemento di una lista ha bisogno di una key univoca.
-          // Lo short fragment <> non accetta attributi, quindi per mettere
-          // la key si usa il fragment "lungo" <Fragment key={...}>
-          <Fragment key={product.id}>
-            <div className="list-group-item d-flex justify-content-between align-items-center">
-              <div className="d-flex align-items-center gap-3">
-                {product.image && <img src={product.image} alt={product.name}
-                  width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
-                <div>
-                <Link to={`/products/${product.id}`} className="fw-semibold">
-                  {product.name}
-                </Link>
-                <small className="text-body-secondary ms-2">
-                  {product.categories.map(category => {
-                    return category.name;
-                  }).join(', ') || 'Nessuna categoria'}
-                </small>
+          return (
+            // Ogni elemento di una lista ha bisogno di una key univoca.
+            // Lo short fragment <> non accetta attributi, quindi per mettere
+            // la key si usa il fragment "lungo" <Fragment key={...}>
+            <Fragment key={product.id}>
+              <div className="list-group-item d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center gap-3">
+                  {product.image && <img src={product.image} alt={product.name}
+                    width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
+                  <div>
+                    <Link to={`/products/${product.id}`} className="fw-semibold">
+                      {product.name}
+                    </Link>
+                    <small className="text-body-secondary ms-2">
+                      {product.categories.map(category => {
+                        return category.name;
+                      }).join(', ') || 'Nessuna categoria'}
+                    </small>
+                  </div>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  <button className="btn btn-outline-primary"
+                    onClick={() => addToCart(product)}>
+                      Aggiungi al carrello
+                  </button>
+                  <button className="btn btn-outline-secondary" onClick={() => {
+                    setEditingProduct(product);
+                  }}>Modifica</button>
+                  <button className="btn btn-outline-danger" onClick={deleteProductInsideMap}>Elimina</button>
                 </div>
               </div>
-              <div className="btn-group btn-group-sm">
-                <button className="btn btn-outline-secondary" onClick={() => {
-                  setEditingProduct(product);
-                }}>Modifica</button>
-                <button className="btn btn-outline-danger" onClick={deleteProductInsideMap}>Elimina</button>
-              </div>
-            </div>
-          </Fragment>
-        )
-      })}
+            </Fragment>
+          )
+        })}
       </div>
 
       <div className="d-flex justify-content-center align-items-center gap-3">

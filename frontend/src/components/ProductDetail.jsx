@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router"
+import { useCart } from "../hooks/useCart";
 
 const API_URL = 'http://localhost:3000';
 
@@ -7,6 +8,8 @@ export default function ProductDetail() {
     const { id } = useParams();
     const [error, setError] = useState('');
     const [product, setProduct] = useState(null);
+
+    const { addToCart } = useCart();
 
     function loadSingleProduct(id) {
         fetch(`${API_URL}/products/${id}`).then((response) => {
@@ -54,6 +57,7 @@ export default function ProductDetail() {
                 <h5 className="text-primary">€ {Number(product.price).toFixed(2)}</h5>
                 {categoryJsx}
                 <p>{product.descrizione}</p>
+                <button className="btn btn-primary" onClick={() => addToCart(product)}>Aggiungi al carrello</button>
             </div>
         </div>}
         <Link to={"/"} className="btn btn-outline-secondary">Torna al catalogo</Link>
