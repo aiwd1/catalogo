@@ -17,6 +17,8 @@ function App() {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
 
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState('');
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -77,8 +79,29 @@ function App() {
       })
   }
 
+  function loadCategories() {
+    fetch(`${API_URL}/categories`)
+      .then((response) => response.json())
+      .then((jsonData) => {
+        if (jsonData.success) {
+          setCategories(jsonData.data);
+        }
+      })
+      .catch((err) => setError(err.message));
+  }
+
   function loadProducts() {
-    fetch(`${API_URL}/products?page=${page}&limit=20&search=${encodeURIComponent(search)}`).then((response) => {
+    const params = new URLSearchParams({
+      page: page,
+      limit: 20,
+      search: search
+    });
+
+    if (categoryId !== '') {
+      params.set('category', categoryId);
+    }
+
+    fetch(`${API_URL}/products?${params}`).then((response) => {
       return response.json();
     }).then((jsonData) => {
 
@@ -109,31 +132,57 @@ function App() {
   // setProducts → nuovo render → nuova fetch creerebbe un ciclo infinito.
   useEffect(() => {
     loadProducts();
-  }, [page, search]);
+  }, [page, search, categoryId]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
 
   return (
-    <>
-      <h1>My Store</h1>
-      <Link to="/chat">Chiedi all'assistente</Link>
+    <div className="container py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="h2 mb-0">My Store</h1>
+        <Link to="/chat" className="btn btn-outline-primary">Chiedi all'assistente</Link>
+      </div>
 
-      <form onSubmit={handleSearch}>
-        <input type="text" value={searchInput}
-          onChange={(event) => {
-            setSearchInput(event.target.value);
-          }}
-        />
-        <button type="submit">Cerca</button>
+      <form onSubmit={handleSearch} className="row g-2 mb-4">
+        <div className="col-md-6">
+          <input type="text" className="form-control" placeholder="Cerca un prodotto" value={searchInput}
+            onChange={(event) => {
+              setSearchInput(event.target.value);
+            }}
+          />
+        </div>
+        <div className="col-md-4">
+        <select className="form-select" value={categoryId} onChange={(event) => {
+          setPage(1);
+          setCategoryId(event.target.value);
+        }}>
+          <option value="">Tutte le categorie</option>
+          {categories.map(category => {
+            return <option key={category.id} value={category.id}>
+              {category.name}: {category.productsCount}
+            </option>
+          })}
+        </select>
+        </div>
+        <h1>{categoryId}</h1>
+        <div className="col-md-2 d-grid">
+          <button type="submit" className="btn btn-primary">Cerca</button>
+        </div>
         <p>Stai cercando: {searchInput}</p>
       </form>
 
       <ProductForm key={editingProduct ? editingProduct.id : 'new'}
+        categories={categories}
         onSubmit={saveProduct}
         initialValues={editingProduct}
         onCancel={editingProduct ? () => setEditingProduct(null) : undefined}
       />
 
-      {error !== '' && <p>{error}</p>}
+      {error !== '' && <div className="alert alert-danger">{error}</div>}
+      <div className="list-group mb-4">
       {products.map((product) => {
         function deleteProductInsideMap() {
           deleteProduct(product.id);
@@ -144,21 +193,35 @@ function App() {
           // Lo short fragment <> non accetta attributi, quindi per mettere
           // la key si usa il fragment "lungo" <Fragment key={...}>
           <Fragment key={product.id}>
-            <h3>
-              <Link to={`/products/${product.id}`}>
-                {product.name}
-              </Link>
-              <button onClick={() => {
-                setEditingProduct(product);
-              }}>Modifica</button>
-              <button onClick={deleteProductInsideMap}>Elimina</button>
-            </h3>
+            <div className="list-group-item d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center gap-3">
+                {product.image && <img src={product.image} alt={product.name}
+                  width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
+                <div>
+                <Link to={`/products/${product.id}`} className="fw-semibold">
+                  {product.name}
+                </Link>
+                <small className="text-body-secondary ms-2">
+                  {product.categories.map(category => {
+                    return category.name;
+                  }).join(', ')}
+                </small>
+                </div>
+              </div>
+              <div className="btn-group btn-group-sm">
+                <button className="btn btn-outline-secondary" onClick={() => {
+                  setEditingProduct(product);
+                }}>Modifica</button>
+                <button className="btn btn-outline-danger" onClick={deleteProductInsideMap}>Elimina</button>
+              </div>
+            </div>
           </Fragment>
         )
       })}
+      </div>
 
-      <div>
-        <button disabled={page === 1} onClick={() => {
+      <div className="d-flex justify-content-center align-items-center gap-3">
+        <button className="btn btn-outline-secondary" disabled={page === 1} onClick={() => {
           if (page !== 1) {
             setPage(page - 1);
           }
@@ -166,7 +229,7 @@ function App() {
           Precedente
         </button>
         <span>Pagina {page} di {totalPages}</span>
-        <button disabled={page >= totalPages} onClick={() => {
+        <button className="btn btn-outline-secondary" disabled={page >= totalPages} onClick={() => {
           if (page < totalPages) {
             setPage(page + 1)
           }
@@ -174,7 +237,7 @@ function App() {
           Successiva
         </button>
       </div>
-    </>
+    </div>
   )
 }
 

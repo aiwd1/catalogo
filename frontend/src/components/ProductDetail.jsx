@@ -31,14 +31,32 @@ export default function ProductDetail() {
         loadSingleProduct(id);
     }, [id]);
 
-    return <div>
-        {error !== '' && <p>{error}</p>}
-        {product !== null && <>
-            <h1>{product.name}</h1>
-            <h5>{product.price}</h5>
-            <p>{product.descrizione}</p>
-        </>}
-        <Link to={"/"}>Torna al catalogo</Link>
+    let categoryJsx = null;
+
+    if (product !== null) {
+        if (product.categories.length === 0) {
+            categoryJsx = <p>Nessun prodotto</p>;
+        } else {
+            categoryJsx = <ul>
+                {product.categories.map(category => {
+                    return <li key={category.id}>{category.name}</li>
+                })}
+            </ul>
+        }
+    }
+
+    return <div className="container py-4">
+        {error !== '' && <div className="alert alert-danger">{error}</div>}
+        {product !== null && <div className="card mb-3">
+            {product.image && <img src={product.image} alt={product.name} className="card-img-top" />}
+            <div className="card-body">
+                <h1 className="h2">{product.name}</h1>
+                <h5 className="text-primary">{product.price}</h5>
+                {categoryJsx}
+                <p>{product.descrizione}</p>
+            </div>
+        </div>}
+        <Link to={"/"} className="btn btn-outline-secondary">Torna al catalogo</Link>
     </div>
 
 }
