@@ -35,28 +35,28 @@ const dataCategory = categoryNames.map((name) => ({ name }));
 const resultCategories = await client.category.createMany({ data: dataCategory });
 console.log(`Inserite ${resultCategories.count} categorie`);
 
+// Restituisce gli id di `count` categorie scelte a caso, tutte diverse tra loro.
+// ORDER BY RAND() mescola le righe nel database e LIMIT tiene solo le prime `count`.
+// Prisma non ha un orderBy casuale: serve la query SQL grezza di $queryRaw.
+async function pickRandomCategoryIds(count) {
+  const rows = await client.$queryRaw`SELECT id FROM Category ORDER BY RAND() LIMIT ${count}`;
+  return rows.map((row) => row.id);
+}
+
 const products = await client.product.findMany({ select: { id: true } });
-const categories = await client.category.findMany({ select: { id: true } });
+const categoryCount = await client.category.count();
 
 // Un'unica lista di collegamenti, salvata con un solo createMany
 const links = [];
 
-for (let i = 0; i < products.length; i++) {
-  const productId = products[i].id;
+for (const product of products) {
+  // numero a caso da 0 a categoryCount compresi: qualche prodotto resta senza categorie
+  const attachedCategoryCount = Math.floor(Math.random() * (categoryCount + 1));
 
-  // un prodotto ogni due ha 3 categorie, gli altri 1
-  const attachedCategoryCount = i % 2 === 1 ? 3 : 1;
-
-  // il Set evita di scegliere due volte la stessa categoria per lo stesso prodotto
-  const attachedCategoryIds = new Set();
-
-  while (attachedCategoryIds.size < attachedCategoryCount) {
-    const randomCategoryIndex = Math.floor(Math.random() * categories.length); // da 0 a categories.length - 1
-    attachedCategoryIds.add(categories[randomCategoryIndex].id);
-  }
+  const attachedCategoryIds = await pickRandomCategoryIds(attachedCategoryCount);
 
   for (const categoryId of attachedCategoryIds) {
-    links.push({ productId, categoryId });
+    links.push({ productId: product.id, categoryId });
   }
 }
 
