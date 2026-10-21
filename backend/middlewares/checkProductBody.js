@@ -64,7 +64,7 @@ export default async function checkProductBody(req, res, next) {
     }
 
     // image è opzionale: se manca resta undefined e il PUT non tocca l'immagine già salvata.
-    // Stringa vuota o null = nessuna immagine (null nel database); altrimenti deve essere un URL http(s)
+    // Stringa vuota o null = nessuna immagine; accettiamo URL http(s) o immagini locali /imgs/<id>.jpg.
     let sanitizedImage = undefined;
 
     if (image !== undefined) {
@@ -87,6 +87,7 @@ export default async function checkProductBody(req, res, next) {
                 });
             }
 
+            const isLocalImage = /^\/imgs\/\d+\.jpg$/.test(sanitizedImage);
             // new URL lancia un errore se la stringa non è un URL valido
             let imageUrl;
             try {
@@ -95,10 +96,10 @@ export default async function checkProductBody(req, res, next) {
                 imageUrl = null;
             }
 
-            if (imageUrl === null || (imageUrl.protocol !== 'http:' && imageUrl.protocol !== 'https:')) {
+            if (!isLocalImage && (imageUrl === null || (imageUrl.protocol !== 'http:' && imageUrl.protocol !== 'https:'))) {
                 return res.status(400).json({
                     success: false,
-                    message: 'image deve essere un URL che inizia con http:// o https://',
+                    message: 'image deve essere un URL http(s) o un percorso /imgs/<id>.jpg',
                     data: null
                 });
             }

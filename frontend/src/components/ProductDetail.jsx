@@ -51,7 +51,7 @@ export default function ProductDetail() {
     return <div className="container py-4">
         {error !== '' && <div className="alert alert-danger">{error}</div>}
         {product !== null && <div className="card mb-3">
-            {product.image && <img src={product.image} alt={product.name} className="card-img-top" />}
+            {product.image && <img src={product.image.startsWith('/') ? `${API_URL}${product.image}` : product.image} alt={product.name} className="card-img-top" />}
             <div className="card-body">
                 <h1 className="h2">{product.name}</h1>
                 <h5 className="text-primary">€ {Number(product.price).toFixed(2)}</h5>

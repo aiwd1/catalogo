@@ -3,9 +3,12 @@ import productsRouter from './routers/productsRouter.js';
 import aiRouter from './routers/aiRouter.js';
 import categoriesRouter from './routers/categoriesRouter.js';
 import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const app = express();
 const port = 3000;
+const backendRoot = fileURLToPath(new URL('./', import.meta.url));
 
 // CORS (Cross-Origin Resource Sharing)
 // Il frontend (Vite, http://localhost:5173) e il backend (http://localhost:3000)
@@ -23,6 +26,9 @@ app.use(cors());
 // Questo middleware entra in gioco quando il client
 // mi invia un messaggio DICENDOMI che è JSON
 app.use(express.json());
+
+// Le immagini dei prodotti sono mantenute nella cartella public/imgs della root.
+app.use('/imgs', express.static(path.join(backendRoot, 'public', 'imgs')));
 
 // Tutte le rotte definite in productsRouter partono dal prefisso /products
 // (es. router.get('/') → GET http://localhost:3000/products)

@@ -95,7 +95,7 @@ for (let id = 1; id <= 100; id++) {
         name,
         descrizione,
         price: Number(price.toFixed(2)),
-        image: `https://picsum.photos/seed/${id}/600/400`
+        image: `/imgs/${id}.jpg`
     });
 }
 

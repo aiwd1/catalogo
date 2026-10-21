@@ -11,6 +11,8 @@ const router = Router();
 function formatProduct(product) {
     return {
         ...product, // prendi tutti i campi dell'oggetto products
+        // Le 100 immagini generate sono associate agli ID del catalogo demo.
+        image: product.id <= 100 ? `/imgs/${product.id}.jpg` : product.image,
         categories: product.categories.map(pivot => {
             return pivot.category;
         }), // vai a aggiungere/sovrascrivere categories

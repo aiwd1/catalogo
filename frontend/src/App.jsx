@@ -198,7 +198,7 @@ function App() {
             <Fragment key={product.id}>
               <div className="list-group-item d-flex justify-content-between align-items-center">
                 <div className="d-flex align-items-center gap-3">
-                  {product.image && <img src={product.image} alt={product.name}
+                  {product.image && <img src={product.image.startsWith('/') ? `${API_URL}${product.image}` : product.image} alt={product.name}
                     width="90" height="60" className="rounded object-fit-cover" loading="lazy" />}
                   <div>
                     <Link to={`/products/${product.id}`} className="fw-semibold">

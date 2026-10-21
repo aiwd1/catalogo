@@ -66,7 +66,7 @@ export default function ProductForm({ onSubmit, initialValues, onCancel, categor
                         onChange={handleChange} />
                 </div>
                 <div className="col-12">
-                    <input name="image" type="url" className="form-control" placeholder="URL dell'immagine (https://...)" value={form.image}
+                    <input name="image" type="text" className="form-control" placeholder="URL o percorso dell'immagine" value={form.image}
                         onChange={handleChange} />
                 </div>
             </div>
